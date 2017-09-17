@@ -1,0 +1,4 @@
+# Exclude Debug Folder
+Debug/
+# Exclude .launches Folder
+.launches/
