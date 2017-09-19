@@ -48,7 +48,7 @@ eUSCI_SPI_MasterConfig SPI0MasterConfig =
      EUSCI_B_SPI_3PIN
 };
 
-/* Timer_A UpMode Configuration Parameter */
+/* Timer_A UpMode Configuration Parameters */
 Timer_A_UpModeConfig upConfig =
 {
         TIMER_A_CLOCKSOURCE_SMCLK,              // SMCLK Clock Source
@@ -78,10 +78,47 @@ void main(void)
     Interrupt_enableMaster();
 
     FRESULT r;
-    r = f_mount(&FS, "0", 1);
-    r = f_opendir(&DI, "/");
 
-    r = f_readdir(&DI, &FI);
+    /*First we should mount the SD Card into the Fatfs file system*/
+    r = f_mount(&FS, "0", 1);
+    /*Check for errors. Trap MSP432 if there is an error*/
+    if(r != FR_OK)
+    {
+        MSPrintf(EUSCI_A0_BASE, "Error mounting SD Card, check your connections\r\n");
+        while(1);
+    }
+
+    /*Let's try to open the root directory on the SD Card*/
+    r = f_opendir(&DI, "/");
+    /*Check for errors. Trap MSP432 if there is an error*/
+    if(r != FR_OK)
+    {
+        MSPrintf(EUSCI_A0_BASE, "Could not open root directory\r\n");
+        while(1);
+    }
+
+    /*Read everything inside the root directory*/
+    do
+    {
+        /*Read a directory/file*/
+        r = f_readdir(&DI, &FI);
+        /*Check for errors. Trap MSP432 if there is an error*/
+        if(r != FR_OK)
+        {
+           MSPrintf(EUSCI_A0_BASE, "Error reading file/directory\r\n");
+           while(1);
+        }
+
+        /*Print the file to the serial terminal*/
+        MSPrintf(EUSCI_A0_BASE, "%c%c%c%c%c %s\r\n",
+               (FI.fattrib & AM_DIR) ? 'D' : '-',
+               (FI.fattrib & AM_RDO) ? 'R' : '-',
+               (FI.fattrib & AM_HID) ? 'H' : '-',
+               (FI.fattrib & AM_SYS) ? 'S' : '-',
+               (FI.fattrib & AM_ARC) ? 'A' : '-',
+               ((char*)FI.fname));
+
+    }while(FI.fname[0]);
 
     while(1)
     {
