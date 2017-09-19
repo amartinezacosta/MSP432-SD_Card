@@ -77,7 +77,7 @@ void main(void)
 
     Interrupt_enableMaster();
 
-    FRESULT r;
+    FRESULT r
 
     /*First we should mount the SD Card into the Fatfs file system*/
     r = f_mount(&FS, "0", 1);
